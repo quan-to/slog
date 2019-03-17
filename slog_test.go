@@ -8,7 +8,18 @@ import (
 	"testing"
 )
 
-// Crash tests
+func TestArgsOnly(t *testing.T) {
+	SetFieldRepresentation(NoFields)
+	buff := bytes.NewBufferString("")
+	i := Scope("ArgsOnly").WithCustomWriter(buff)
+
+	i.Info("huebr", 1, 10.0, true)
+
+	o := buff.String()
+	if strings.Index(o, "huebr 1 10 true") == -1 {
+		t.Errorf("Expected \"%s\" in output: \"%s\"", "huebr 1 10.0 true", o)
+	}
+}
 
 func TestSetTestMode(t *testing.T) {
 	SetTestMode()
@@ -68,6 +79,7 @@ func TestSubScope(t *testing.T) {
 }
 
 func TestWithFields(t *testing.T) {
+	SetFieldRepresentation(KeyValueFields)
 	i := Scope("WithFields").WithFields(map[string]interface{}{
 		"a": "b",
 		"b": 5,
@@ -164,43 +176,40 @@ func TestWithFieldsKV(t *testing.T) {
 
 	kvData := ""
 
-	for k, v := range i.fields {
-		kvData += fmt.Sprintf("%s=%v,", k, v)
+	testFields := func(out string) { // This is nescessary since the range orders can randomly change
+		for k, v := range i.fields {
+			kvz := fmt.Sprintf("%s=%v,", k, v)
+			if strings.Index(out, kvz) == -1 {
+				t.Errorf("Expected \"%s\" in output: \"%s\"", kvData, out)
+			}
+		}
 	}
 
 	i.Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
 
 	o := buff.String()
-	if strings.Index(o, kvData) == -1 {
-		t.Errorf("Expected \"%s\" in output: \"%s\"", kvData, o)
-	}
+	testFields(o)
 
 	buff.Reset()
 
 	i.Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
 
 	o = buff.String()
-	if strings.Index(o, kvData) == -1 {
-		t.Errorf("Expected \"%s\" in output: \"%s\"", kvData, o)
-	}
+	testFields(o)
 
 	buff.Reset()
 
 	i.Debug("Test %s %d %f %v", "huebr", 1, 10.0, true)
 
 	o = buff.String()
-	if strings.Index(o, kvData) == -1 {
-		t.Errorf("Expected \"%s\" in output: \"%s\"", kvData, o)
-	}
+	testFields(o)
 
 	buff.Reset()
 
 	i.Error("Test %s %d %f %v", "huebr", 1, 10.0, true)
 
 	o = buff.String()
-	if strings.Index(o, kvData) == -1 {
-		t.Errorf("Expected \"%s\" in output: \"%s\"", kvData, o)
-	}
+	testFields(o)
 
 	buff.Reset()
 }

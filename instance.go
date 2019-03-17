@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"io"
-	"log"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -48,14 +48,20 @@ func formatTime(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
+func hasFormatData(str string) bool {
+	// TODO: Better testing
+	return strings.Index(str, "%") > -1
+}
+
 type Instance struct {
 	scope     string
 	fields    map[string]interface{}
 	customOut io.Writer
 }
 
-func (i *Instance) log(str interface{}, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
+func (i *Instance) commonLog(str string, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
 	txt := ""
+
 	if i.fields != nil {
 		fieldsTxt := buildFieldString(i.fields)
 		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(asString(str), v...)), c(fieldsTxt))
@@ -66,12 +72,46 @@ func (i *Instance) log(str interface{}, level LogLevel, c func(arg interface{}) 
 	_, _ = i.Write([]byte(txt))
 }
 
+func (i *Instance) argsOnlyLog(str interface{}, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
+	txt := ""
+
+	args := append([]interface{}{str}, v...)
+
+	baseFormat := ""
+
+	for range args {
+		baseFormat += "%v "
+	}
+
+	if i.fields != nil {
+		fieldsTxt := buildFieldString(i.fields)
+		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(baseFormat, args...)), c(fieldsTxt))
+	} else {
+		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(baseFormat, args...)))
+	}
+
+	_, _ = i.Write([]byte(txt))
+}
+
+func (i *Instance) log(str interface{}, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
+	switch ft := str.(type) {
+	case string: // Use normal logging
+		if hasFormatData(ft) {
+			i.commonLog(ft, level, c, v...)
+		} else {
+			i.argsOnlyLog(str, level, c, v...)
+		}
+	default: // Args only, to enable slog.Info(a,b,c,d,e)
+		i.argsOnlyLog(str, level, c, v...)
+	}
+}
+
 func (i *Instance) Write(p []byte) (n int, err error) {
 	if i.customOut != nil {
 		return i.customOut.Write(p)
 	}
 
-	log.Printf(string(p))
+	fmt.Printf(string(p))
 	return len(p), nil
 }
 
