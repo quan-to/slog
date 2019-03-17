@@ -163,20 +163,16 @@ func (i *Instance) Error(str interface{}, v ...interface{}) *Instance {
 }
 
 func (i *Instance) Fatal(str interface{}, v ...interface{}) {
-	varags := v
-	if len(varags) == 1 {
-		if reflect.TypeOf(v[0]) == reflect.TypeOf([]interface{}{}) {
-			varags = v[0].([]interface{})
-		} else {
-			varags = v
-		}
+	varargs := v
+	if len(varargs) == 1 && reflect.TypeOf(v[0]) == reflect.TypeOf([]interface{}{}) {
+		varargs = v[0].([]interface{})
 	}
 
 	var msg string
-	if len(varags) == 0 {
+	if varargs == nil || len(varargs) == 0 {
 		msg = asString(str)
 	} else {
-		msg = fmt.Sprintf(asString(str), varags...)
+		msg = fmt.Sprintf(asString(str), varargs...)
 	}
 
 	i.Error(msg)

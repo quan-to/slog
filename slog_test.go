@@ -4,9 +4,50 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 )
+
+func TestSetDefaultOutput(t *testing.T) {
+	od := defaultOut
+
+	SetDefaultOutput(os.Stdout)
+	// Crash Tests
+	Debug("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Log("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	LogNoFormat("Test %s %d %f %v", "huebr", 1, 10.0, true)
+
+	SetDefaultOutput(os.Stderr)
+	// Crash Tests
+	Debug("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Log("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	LogNoFormat("Test %s %d %f %v", "huebr", 1, 10.0, true)
+
+	buff := bytes.NewBufferString("")
+	SetDefaultOutput(buff)
+	// Crash Tests
+	Debug("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	Log("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	LogNoFormat("Test %s %d %f %v", "huebr", 1, 10.0, true)
+
+	buff.Reset()
+
+	// Test output
+	Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+
+	if strings.Index(buff.String(), "Test huebr 1 10.000000 true") == -1 {
+		t.Errorf("Expected string %s in %s", "Test huebr 1 10.000000 true", buff.String())
+	}
+
+	SetDefaultOutput(od)
+}
 
 func TestArgsOnly(t *testing.T) {
 	SetFieldRepresentation(NoFields)
@@ -19,6 +60,43 @@ func TestArgsOnly(t *testing.T) {
 	if strings.Index(o, "huebr 1 10 true") == -1 {
 		t.Errorf("Expected \"%s\" in output: \"%s\"", "huebr 1 10.0 true", o)
 	}
+
+	SetFieldRepresentation(JSONFields)
+	buff = bytes.NewBufferString("")
+	i = Scope("ArgsOnly").WithFields(map[string]interface{}{
+		"a": "b",
+	}).WithCustomWriter(buff)
+
+	i.Info(555, 1, 10.0, true)
+
+	o = buff.String()
+	if strings.Index(o, "555 1 10 true") == -1 {
+		t.Errorf("Expected \"%s\" in output: \"%s\"", "huebr 1 10.0 true", o)
+	}
+
+	SetFieldRepresentation(KeyValueFields)
+	buff = bytes.NewBufferString("")
+	i = Scope("ArgsOnly").WithFields(map[string]interface{}{
+		"a": "b",
+	}).WithCustomWriter(buff)
+
+	i.Info("huebr", 1, 10.0, true)
+
+	o = buff.String()
+	if strings.Index(o, "huebr 1 10 true") == -1 {
+		t.Errorf("Expected \"%s\" in output: \"%s\"", "huebr 1 10.0 true", o)
+	}
+}
+
+func TestDefaultOutput(t *testing.T) {
+	i := Scope("DefaultOutput").WithCustomWriter(nil)
+
+	// Crash Tests
+	i.Debug("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	i.Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	i.Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	i.Log("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	i.LogNoFormat("Test %s %d %f %v", "huebr", 1, 10.0, true)
 }
 
 func TestSetTestMode(t *testing.T) {
@@ -76,6 +154,7 @@ func TestSubScope(t *testing.T) {
 	i.Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
 	i.Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
 	i.Log("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	i.LogNoFormat("Test %s %d %f %v", "huebr", 1, 10.0, true)
 }
 
 func TestWithFields(t *testing.T) {
@@ -116,6 +195,7 @@ func TestWithFields(t *testing.T) {
 	i.Warn("Test %s %d %f %v", "huebr", 1, 10.0, true)
 	i.Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
 	i.Log("Test %s %d %f %v", "huebr", 1, 10.0, true)
+	i.LogNoFormat("Test %s %d %f %v", "huebr", 1, 10.0, true)
 }
 
 func TestWithFieldsJSON(t *testing.T) {
