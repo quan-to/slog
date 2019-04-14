@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"io"
+	"path"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -13,10 +15,10 @@ import (
 type LogLevel string
 
 const (
-	LogInfo  LogLevel = "INFO"
-	LogWarn           = "WARN"
-	LogDebug          = "DEBUG"
-	LogError          = "ERROR"
+	LogInfo  LogLevel = "I"
+	LogWarn           = "W"
+	LogDebug          = "D"
+	LogError          = "E"
 )
 
 var (
@@ -26,12 +28,12 @@ var (
 	ColorDebug = aurora.Magenta
 )
 
-var logBaseFormat = "%s|%5s| %30v | %s" + LineBreak
+var logBaseFormat = "%s|%1s| %30v | %s" + LineBreak
 var logBaseWithFieldsFormat = "%s|%5s| %30v | %s | %v" + LineBreak
 
 func SetScopeLength(length int) {
-	logBaseFormat = "%s|%5s| %" + fmt.Sprintf("%d", length) + "v | %s" + LineBreak
-	logBaseWithFieldsFormat = "%s|%5s| %" + fmt.Sprintf("%d", length) + "v | %s | %v" + LineBreak
+	logBaseFormat = "%s|%1s| %" + fmt.Sprintf("%d", length) + "v | %s" + LineBreak
+	logBaseWithFieldsFormat = "%s|%1s| %" + fmt.Sprintf("%d", length) + "v | %s | %v" + LineBreak
 }
 
 func init() {
@@ -63,19 +65,32 @@ func hasFormatData(str string) bool {
 }
 
 type Instance struct {
-	scope     string
-	fields    map[string]interface{}
-	customOut io.Writer
+	scope       string
+	fields      map[string]interface{}
+	customOut   io.Writer
+	stackOffset int
+}
+
+func getCallerString(stackOffset int) string {
+	_, fn, line, _ := runtime.Caller(stackOffset)
+	return fmt.Sprintf("%s:%d", path.Base(fn), line)
 }
 
 func (i *Instance) commonLog(str string, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
 	txt := ""
 
+	baseString := c(fmt.Sprintf(asString(str), v...)).String()
+
+	if showLines {
+		cs := getCallerString(i.stackOffset)
+		baseString = fmt.Sprintf("%25s | %s", aurora.Blue(cs).String(), baseString)
+	}
+
 	if i.fields != nil {
 		fieldsTxt := buildFieldString(i.fields)
-		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(asString(str), v...)), c(fieldsTxt))
+		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString, c(fieldsTxt))
 	} else {
-		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(asString(str), v...)))
+		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString)
 	}
 
 	_, _ = i.Write([]byte(txt))
@@ -92,11 +107,18 @@ func (i *Instance) argsOnlyLog(str interface{}, level LogLevel, c func(arg inter
 		baseFormat += "%v "
 	}
 
+	baseString := c(fmt.Sprintf(baseFormat, args...)).String()
+
+	if showLines {
+		cs := getCallerString(i.stackOffset)
+		baseString = fmt.Sprintf("%25s | %s", aurora.Blue(cs).String(), baseString)
+	}
+
 	if i.fields != nil {
 		fieldsTxt := buildFieldString(i.fields)
-		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(baseFormat, args...)), c(fieldsTxt))
+		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString, c(fieldsTxt))
 	} else {
-		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), c(fmt.Sprintf(baseFormat, args...)))
+		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString)
 	}
 
 	_, _ = i.Write([]byte(txt))
@@ -140,7 +162,11 @@ func (i *Instance) LogNoFormat(str interface{}, v ...interface{}) *Instance {
 }
 
 func (i *Instance) Log(str interface{}, v ...interface{}) *Instance {
-	return i.Info(str, v...)
+	// Do not call i.Info, to not change the stack and break filename:line
+	if infoEnabled {
+		i.log(str, LogInfo, ColorInfo, v...)
+	}
+	return i
 }
 
 func (i *Instance) Info(str interface{}, v ...interface{}) *Instance {
@@ -184,7 +210,7 @@ func (i *Instance) Fatal(str interface{}, v ...interface{}) {
 		msg = fmt.Sprintf(asString(str), varargs...)
 	}
 
-	i.Error(msg)
+	i.log(msg, LogError, ColorError)
 	panic(msg)
 }
 
@@ -217,8 +243,9 @@ func (i *Instance) SubScope(scope string) *Instance {
 
 func (i *Instance) clone() *Instance {
 	return &Instance{
-		fields:    i.fields,
-		scope:     i.scope,
-		customOut: i.customOut,
+		fields:      i.fields,
+		scope:       i.scope,
+		customOut:   i.customOut,
+		stackOffset: i.stackOffset,
 	}
 }

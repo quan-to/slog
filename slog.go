@@ -24,7 +24,13 @@ var infoEnabled = true
 var fieldRepresentation = JSONFields
 var defaultOut io.Writer = os.Stdout
 
+var showLines = false
+
 var glog = Scope("Global")
+
+func init() {
+	glog.stackOffset -= 1 // This will be called from global context, so the stack is one less.
+}
 
 func LogNoFormat(str interface{}, v ...interface{}) *Instance {
 	return glog.LogNoFormat(str, v...)
@@ -56,8 +62,9 @@ func Fatal(str interface{}, v ...interface{}) {
 
 func Scope(scope string) *Instance {
 	return &Instance{
-		scope:     scope,
-		customOut: defaultOut,
+		scope:       scope,
+		customOut:   defaultOut,
+		stackOffset: 4,
 	}
 }
 
@@ -77,6 +84,9 @@ func SetInfo(enabled bool) {
 }
 func SetError(enabled bool) {
 	errorEnabled = enabled
+}
+func SetShowLines(enabled bool) {
+	showLines = enabled
 }
 
 func SetFieldRepresentation(representationType FieldRepresentationType) {
@@ -108,6 +118,9 @@ func InfoEnabled() bool {
 }
 func ErrorEnabled() bool {
 	return errorEnabled
+}
+func ShowLinesEnabled() bool {
+	return showLines
 }
 
 // endregion

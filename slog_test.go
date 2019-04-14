@@ -12,6 +12,7 @@ import (
 func TestSetDefaultOutput(t *testing.T) {
 	od := defaultOut
 
+	SetShowLines(true)
 	SetDefaultOutput(os.Stdout)
 	// Crash Tests
 	Debug("Test %s %d %f %v", "huebr", 1, 10.0, true)
@@ -444,6 +445,17 @@ func TestSetWarn(t *testing.T) {
 	SetWarning(false)
 	if WarningEnabled() {
 		t.Fatalf("Warn is set to true! Should be false")
+	}
+}
+
+func TestSetShowLines(t *testing.T) {
+	SetShowLines(true)
+	if !ShowLinesEnabled() {
+		t.Fatal("ShowLines is set to false! Should be true")
+	}
+	SetShowLines(false)
+	if ShowLinesEnabled() {
+		t.Fatal("ShowLines is set to true! Should be false")
 	}
 }
 
