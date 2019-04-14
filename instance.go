@@ -26,8 +26,17 @@ var (
 	ColorDebug = aurora.Magenta
 )
 
-const logBaseFormat = "%s|%5s| %30v | %s" + LineBreak
-const logBaseWithFieldsFormat = "%s|%5s| %30v | %s | %v" + LineBreak
+var logBaseFormat = "%s|%5s| %30v | %s" + LineBreak
+var logBaseWithFieldsFormat = "%s|%5s| %30v | %s | %v" + LineBreak
+
+func SetScopeLength(length int) {
+	logBaseFormat = "%s|%5s| %" + fmt.Sprintf("%d", length) + "v | %s" + LineBreak
+	logBaseWithFieldsFormat = "%s|%5s| %" + fmt.Sprintf("%d", length) + "v | %s | %v" + LineBreak
+}
+
+func init() {
+	SetScopeLength(30)
+}
 
 func buildFieldString(data map[string]interface{}) string {
 	retVal := ""
