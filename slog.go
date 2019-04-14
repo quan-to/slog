@@ -26,10 +26,11 @@ var defaultOut io.Writer = os.Stdout
 
 var showLines = false
 
-var glog = Scope("Global")
+var glog *Instance
 
 func init() {
-	glog.stackOffset -= 1 // This will be called from global context, so the stack is one less.
+	glog = Scope("Global")
+	glog.stackOffset += 1 // This will be called from global context, so the stack has one more level
 }
 
 func LogNoFormat(str interface{}, v ...interface{}) *Instance {
