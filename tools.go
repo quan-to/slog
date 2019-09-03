@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var pipeChar = aurora.Gray("|").Bold().String()
+var pipeChar = aurora.Bold("|").White().String()
 
 func buildFieldString(data map[string]interface{}) string {
 	retVal := ""

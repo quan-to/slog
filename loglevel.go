@@ -13,7 +13,7 @@ const (
 
 var levelColors = map[LogLevel]colorFunc{
 	INFO:  aurora.Cyan,
-	WARN:  aurora.Brown,
+	WARN:  aurora.Yellow,
 	ERROR: aurora.Red,
 	DEBUG: aurora.Magenta,
 }

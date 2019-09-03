@@ -26,7 +26,7 @@ type slogInstance struct {
 }
 
 func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) string {
-	logDate := aurora.Gray(formatTime(time.Now()))
+	logDate := aurora.Gray(7, formatTime(time.Now()))
 	levelColor := levelColors[level]
 	scope := padRight(strings.Join(i.scope, " > "), scopeLength)
 	stringifiedFields := "{}"
@@ -35,8 +35,8 @@ func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) s
 		stringifiedFields = buildFieldString(i.fields)
 	}
 
-	op := operationColors[i.op](padRight(string(i.op), maxOperationStringLength))
-	tag := aurora.Gray(i.tag)
+	op := operationColors[i.op](padRight(string(i.op), maxOperationStringLength)).White()
+	tag := aurora.Gray(7, i.tag)
 
 	logHead := logDate.String() + " " + pipeChar + " " + levelColor(aurora.Bold(level)).String() + " " + pipeChar + " " + op.String() + " " + pipeChar + " " + tag.String() + " " + pipeChar + " " + scope + " " + pipeChar + " "
 
