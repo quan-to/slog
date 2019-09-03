@@ -141,7 +141,7 @@ func TestSetTestMode(t *testing.T) {
 }
 
 func TestSubScope(t *testing.T) {
-	i := Scope("ABCD").SubScope("EFGH")
+	i := Scope("ABCD").SubScope("EFGH").(*slogInstance)
 
 	if strings.Index(i.scope, "ABCD") == -1 {
 		t.Errorf("Expected ABCD in Scope")
@@ -163,7 +163,7 @@ func TestWithFields(t *testing.T) {
 	i := Scope("WithFields").WithFields(map[string]interface{}{
 		"a": "b",
 		"b": 5,
-	})
+	}).(*slogInstance)
 
 	if i.fields["a"] != "b" {
 		t.Errorf("Expected field \"a\" to be \"b\"")
@@ -177,7 +177,7 @@ func TestWithFields(t *testing.T) {
 	i = i.WithFields(map[string]interface{}{
 		"c": 3.14,
 		"a": 9,
-	})
+	}).(*slogInstance)
 
 	if i.fields["a"] != 9 {
 		t.Errorf("Expected field \"a\" to be 9")
@@ -205,7 +205,7 @@ func TestWithFieldsJSON(t *testing.T) {
 	i := Scope("WithFieldsJSON").WithFields(map[string]interface{}{
 		"a": "b",
 		"b": 5,
-	}).WithCustomWriter(buff)
+	}).WithCustomWriter(buff).(*slogInstance)
 
 	jsonDataB, _ := json.Marshal(i.fields)
 	jsonData := string(jsonDataB)
@@ -253,7 +253,7 @@ func TestWithFieldsKV(t *testing.T) {
 	i := Scope("WithFieldsKV").WithFields(map[string]interface{}{
 		"a": "b",
 		"b": 5,
-	}).WithCustomWriter(buff)
+	}).WithCustomWriter(buff).(*slogInstance)
 
 	kvData := ""
 
@@ -301,7 +301,7 @@ func TestWithFieldsNoFields(t *testing.T) {
 	i := Scope("WithFieldsKV").WithFields(map[string]interface{}{
 		"a": "b",
 		"b": 5,
-	}).WithCustomWriter(buff)
+	}).WithCustomWriter(buff).(*slogInstance)
 
 	kvData := ""
 
@@ -398,7 +398,7 @@ func TestFatal(t *testing.T) {
 }
 
 func TestScope(t *testing.T) {
-	scoped := Scope("test-scope")
+	scoped := Scope("test-scope").(*slogInstance)
 	if scoped.scope != "test-scope" {
 		t.Fatalf("Expected test-scope got %s", scoped.scope)
 	}

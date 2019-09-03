@@ -16,44 +16,46 @@ const (
 )
 
 // region Global
-var debugEnabled = true
-var warnEnabled = true
-var errorEnabled = true
-var infoEnabled = true
+var enabledLevels = map[LogLevel]bool{
+	DEBUG: true,
+	WARN:  true,
+	ERROR: true,
+	INFO:  true,
+}
 
 var fieldRepresentation = JSONFields
 var defaultOut io.Writer = os.Stdout
 
 var showLines = false
 
-var glog *Instance
+var glog *slogInstance
 
 func init() {
-	glog = Scope("Global")
+	glog = Scope("Global").(*slogInstance)
 	glog.stackOffset += 1 // This will be called from global context, so the stack has one more level
 }
 
-func LogNoFormat(str interface{}, v ...interface{}) *Instance {
+func LogNoFormat(str interface{}, v ...interface{}) Instance {
 	return glog.LogNoFormat(str, v...)
 }
 
-func Log(str interface{}, v ...interface{}) *Instance {
+func Log(str interface{}, v ...interface{}) Instance {
 	return glog.Log(str, v...)
 }
 
-func Info(str interface{}, v ...interface{}) *Instance {
+func Info(str interface{}, v ...interface{}) Instance {
 	return glog.Info(str, v...)
 }
 
-func Debug(str interface{}, v ...interface{}) *Instance {
+func Debug(str interface{}, v ...interface{}) Instance {
 	return glog.Debug(str, v...)
 }
 
-func Warn(str interface{}, v ...interface{}) *Instance {
+func Warn(str interface{}, v ...interface{}) Instance {
 	return glog.Warn(str, v...)
 }
 
-func Error(str interface{}, v ...interface{}) *Instance {
+func Error(str interface{}, v ...interface{}) Instance {
 	return glog.Error(str, v...)
 }
 
@@ -61,8 +63,8 @@ func Fatal(str interface{}, v ...interface{}) {
 	glog.Fatal(str, v)
 }
 
-func Scope(scope string) *Instance {
-	return &Instance{
+func Scope(scope string) Instance {
+	return &slogInstance{
 		scope:       scope,
 		customOut:   defaultOut,
 		stackOffset: 4,
@@ -75,16 +77,16 @@ func SetDefaultOutput(o io.Writer) {
 }
 
 func SetDebug(enabled bool) {
-	debugEnabled = enabled
+	enabledLevels[DEBUG] = enabled
 }
 func SetWarning(enabled bool) {
-	warnEnabled = enabled
+	enabledLevels[WARN] = enabled
 }
 func SetInfo(enabled bool) {
-	infoEnabled = enabled
+	enabledLevels[INFO] = enabled
 }
 func SetError(enabled bool) {
-	errorEnabled = enabled
+	enabledLevels[ERROR] = enabled
 }
 func SetShowLines(enabled bool) {
 	showLines = enabled
@@ -109,16 +111,16 @@ func UnsetTestMode() {
 }
 
 func DebugEnabled() bool {
-	return debugEnabled
+	return enabledLevels[DEBUG]
 }
 func WarningEnabled() bool {
-	return warnEnabled
+	return enabledLevels[WARN]
 }
 func InfoEnabled() bool {
-	return infoEnabled
+	return enabledLevels[INFO]
 }
 func ErrorEnabled() bool {
-	return errorEnabled
+	return enabledLevels[ERROR]
 }
 func ShowLinesEnabled() bool {
 	return showLines

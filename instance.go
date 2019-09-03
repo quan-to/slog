@@ -1,31 +1,13 @@
 package slog
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"io"
 	"path"
 	"reflect"
 	"runtime"
-	"strings"
 	"time"
-)
-
-type LogLevel string
-
-const (
-	LogInfo  LogLevel = "I"
-	LogWarn           = "W"
-	LogDebug          = "D"
-	LogError          = "E"
-)
-
-var (
-	ColorInfo  = aurora.Cyan
-	ColorWarn  = aurora.Brown
-	ColorError = aurora.Red
-	ColorDebug = aurora.Magenta
 )
 
 var logBaseFormat = "%s|%1s| %30v | %s" + LineBreak
@@ -40,35 +22,13 @@ func init() {
 	SetScopeLength(30)
 }
 
-func buildFieldString(data map[string]interface{}) string {
-	retVal := ""
-	switch fieldRepresentation {
-	case JSONFields:
-		v, _ := json.Marshal(data)
-		retVal = string(v)
-	case KeyValueFields:
-		for k, v := range data {
-			retVal += fmt.Sprintf("%s=%v,", k, v)
-		}
-	}
-
-	return retVal
-}
-
-func formatTime(t time.Time) string {
-	return t.Format(time.RFC3339)
-}
-
-func hasFormatData(str string) bool {
-	// TODO: Better testing
-	return strings.Index(str, "%") > -1
-}
-
-type Instance struct {
+type slogInstance struct {
 	scope       string
 	fields      map[string]interface{}
 	customOut   io.Writer
 	stackOffset int
+	tag         string
+	op          LogOperation
 }
 
 func getCallerString(stackOffset int) string {
@@ -76,9 +36,9 @@ func getCallerString(stackOffset int) string {
 	return fmt.Sprintf("%s:%d", path.Base(fn), line)
 }
 
-func (i *Instance) commonLog(str string, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
+func (i *slogInstance) commonLog(str string, level LogLevel, v ...interface{}) {
 	txt := ""
-
+	c := levelColors[level]
 	baseString := c(fmt.Sprintf(asString(str), v...)).String()
 
 	if showLines {
@@ -96,8 +56,10 @@ func (i *Instance) commonLog(str string, level LogLevel, c func(arg interface{})
 	_, _ = i.Write([]byte(txt))
 }
 
-func (i *Instance) argsOnlyLog(str interface{}, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
+func (i *slogInstance) argsOnlyLog(str interface{}, level LogLevel, v ...interface{}) {
 	txt := ""
+
+	c := levelColors[level]
 
 	args := append([]interface{}{str}, v...)
 
@@ -106,7 +68,7 @@ func (i *Instance) argsOnlyLog(str interface{}, level LogLevel, c func(arg inter
 	for range args {
 		baseFormat += "%v "
 	}
-
+	fmt.Printf("%v - %s\n", c, level)
 	baseString := c(fmt.Sprintf(baseFormat, args...)).String()
 
 	if showLines {
@@ -124,20 +86,20 @@ func (i *Instance) argsOnlyLog(str interface{}, level LogLevel, c func(arg inter
 	_, _ = i.Write([]byte(txt))
 }
 
-func (i *Instance) log(str interface{}, level LogLevel, c func(arg interface{}) aurora.Value, v ...interface{}) {
+func (i *slogInstance) log(str interface{}, level LogLevel, v ...interface{}) {
 	switch ft := str.(type) {
 	case string: // Use normal logging
 		if hasFormatData(ft) {
-			i.commonLog(ft, level, c, v...)
+			i.commonLog(ft, level, v...)
 		} else {
-			i.argsOnlyLog(str, level, c, v...)
+			i.argsOnlyLog(str, level, v...)
 		}
 	default: // Args only, to enable slog.Info(a,b,c,d,e)
-		i.argsOnlyLog(str, level, c, v...)
+		i.argsOnlyLog(str, level, v...)
 	}
 }
 
-func (i *Instance) Write(p []byte) (n int, err error) {
+func (i *slogInstance) Write(p []byte) (n int, err error) {
 	if i.customOut != nil {
 		return i.customOut.Write(p)
 	}
@@ -146,14 +108,15 @@ func (i *Instance) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (i *Instance) LogNoFormat(str interface{}, v ...interface{}) *Instance {
-	if infoEnabled {
+func (i *slogInstance) LogNoFormat(str interface{}, v ...interface{}) Instance {
+	if enabledLevels[INFO] {
+		ColorInfo := levelColors[INFO]
 		txt := ""
 		if i.fields != nil {
 			fieldsTxt := buildFieldString(i.fields)
-			txt = fmt.Sprintf(logBaseWithFieldsFormat, ColorInfo(formatTime(time.Now())), ColorInfo(LogInfo), ColorInfo(aurora.Bold(i.scope)).String(), fmt.Sprintf(asString(str), v...), fieldsTxt)
+			txt = fmt.Sprintf(logBaseWithFieldsFormat, ColorInfo(formatTime(time.Now())), ColorInfo(INFO), ColorInfo(aurora.Bold(i.scope)).String(), fmt.Sprintf(asString(str), v...), fieldsTxt)
 		} else {
-			txt = fmt.Sprintf(logBaseFormat, ColorInfo(formatTime(time.Now())), ColorInfo(LogInfo), ColorInfo(aurora.Bold(i.scope)).String(), fmt.Sprintf(asString(str), v...))
+			txt = fmt.Sprintf(logBaseFormat, ColorInfo(formatTime(time.Now())), ColorInfo(INFO), ColorInfo(aurora.Bold(i.scope)).String(), fmt.Sprintf(asString(str), v...))
 		}
 
 		_, _ = i.Write([]byte(txt))
@@ -161,43 +124,43 @@ func (i *Instance) LogNoFormat(str interface{}, v ...interface{}) *Instance {
 	return i
 }
 
-func (i *Instance) Log(str interface{}, v ...interface{}) *Instance {
+func (i *slogInstance) Log(str interface{}, v ...interface{}) Instance {
 	// Do not call i.Info, to not change the stack and break filename:line
-	if infoEnabled {
-		i.log(str, LogInfo, ColorInfo, v...)
+	if enabledLevels[INFO] {
+		i.log(str, INFO, v...)
 	}
 	return i
 }
 
-func (i *Instance) Info(str interface{}, v ...interface{}) *Instance {
-	if infoEnabled {
-		i.log(str, LogInfo, ColorInfo, v...)
+func (i *slogInstance) Info(str interface{}, v ...interface{}) Instance {
+	if enabledLevels[INFO] {
+		i.log(str, INFO, v...)
 	}
 	return i
 }
 
-func (i *Instance) Debug(str interface{}, v ...interface{}) *Instance {
-	if debugEnabled {
-		i.log(str, LogDebug, ColorDebug, v...)
+func (i *slogInstance) Debug(str interface{}, v ...interface{}) Instance {
+	if enabledLevels[DEBUG] {
+		i.log(str, DEBUG, v...)
 	}
 	return i
 }
 
-func (i *Instance) Warn(str interface{}, v ...interface{}) *Instance {
-	if warnEnabled {
-		i.log(str, LogWarn, ColorWarn, v...)
+func (i *slogInstance) Warn(str interface{}, v ...interface{}) Instance {
+	if enabledLevels[WARN] {
+		i.log(str, WARN, v...)
 	}
 	return i
 }
 
-func (i *Instance) Error(str interface{}, v ...interface{}) *Instance {
-	if errorEnabled {
-		i.log(str, LogError, ColorError, v...)
+func (i *slogInstance) Error(str interface{}, v ...interface{}) Instance {
+	if enabledLevels[ERROR] {
+		i.log(str, ERROR, v...)
 	}
 	return i
 }
 
-func (i *Instance) Fatal(str interface{}, v ...interface{}) {
+func (i *slogInstance) Fatal(str interface{}, v ...interface{}) {
 	varargs := v
 	if len(varargs) == 1 && reflect.TypeOf(v[0]) == reflect.TypeOf([]interface{}{}) {
 		varargs = v[0].([]interface{})
@@ -210,11 +173,31 @@ func (i *Instance) Fatal(str interface{}, v ...interface{}) {
 		msg = fmt.Sprintf(asString(str), varargs...)
 	}
 
-	i.log(msg, LogError, ColorError)
+	i.log(msg, ERROR)
 	panic(msg)
 }
 
-func (i *Instance) WithFields(fields map[string]interface{}) *Instance {
+func (i *slogInstance) Note(str interface{}, v ...interface{}) Instance {
+	return i.Operation(NOTE).Info(str, v...)
+}
+
+func (i *slogInstance) Await(str interface{}, v ...interface{}) Instance {
+	return i.Operation(AWAIT).Info(str, v...)
+}
+
+func (i *slogInstance) Done(str interface{}, v ...interface{}) Instance {
+	return i.Operation(DONE).Info(str, v...)
+}
+
+func (i *slogInstance) Success(str interface{}, v ...interface{}) Instance {
+	return i.Done(str, v...)
+}
+
+func (i *slogInstance) IO(str interface{}, v ...interface{}) Instance {
+	return i.Operation(IO).Info(str, v...)
+}
+
+func (i *slogInstance) WithFields(fields map[string]interface{}) Instance {
 	if i.fields != nil {
 		// Append Parent fields
 		for k, v := range i.fields {
@@ -229,20 +212,38 @@ func (i *Instance) WithFields(fields map[string]interface{}) *Instance {
 	return i2
 }
 
-func (i *Instance) WithCustomWriter(w io.Writer) *Instance {
+func (i *slogInstance) WithCustomWriter(w io.Writer) Instance {
 	i2 := i.clone()
 	i2.customOut = w
 	return i2
 }
 
-func (i *Instance) SubScope(scope string) *Instance {
+func (i *slogInstance) Scope(scope string) Instance {
 	i2 := i.clone()
-	i2.scope = fmt.Sprintf("%s ▶ %s", i.scope, scope)
+	i2.scope = scope
 	return i2
 }
 
-func (i *Instance) clone() *Instance {
-	return &Instance{
+func (i *slogInstance) SubScope(scope string) Instance {
+	i2 := i.clone()
+	i2.scope = fmt.Sprintf("%s > %s", i.scope, scope)
+	return i2
+}
+
+func (i *slogInstance) Tag(tag string) Instance {
+	i2 := i.clone()
+	i2.tag = tag
+	return i2
+}
+
+func (i *slogInstance) Operation(op LogOperation) Instance {
+	i2 := i.clone()
+	i2.op = op
+	return i2
+}
+
+func (i *slogInstance) clone() *slogInstance {
+	return &slogInstance{
 		fields:      i.fields,
 		scope:       i.scope,
 		customOut:   i.customOut,
