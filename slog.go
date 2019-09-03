@@ -65,9 +65,11 @@ func Fatal(str interface{}, v ...interface{}) {
 
 func Scope(scope string) Instance {
 	return &slogInstance{
-		scope:       scope,
+		scope:       []string{scope},
 		customOut:   defaultOut,
 		stackOffset: 4,
+		tag:         "NONE",
+		op:          MSG,
 	}
 }
 

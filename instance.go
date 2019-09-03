@@ -4,26 +4,20 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"io"
-	"path"
 	"reflect"
-	"runtime"
+	"strings"
 	"time"
 )
 
-var logBaseFormat = "%s|%1s| %30v | %s" + LineBreak
-var logBaseWithFieldsFormat = "%s|%5s| %30v | %s | %v" + LineBreak
+var scopeLength = 24
 
+// SetScopeLength sets the scope field length (adds left pad when nescessary) - Affects globally all SLog Instances
 func SetScopeLength(length int) {
-	logBaseFormat = "%s|%1s| %" + fmt.Sprintf("%d", length) + "v | %s" + LineBreak
-	logBaseWithFieldsFormat = "%s|%1s| %" + fmt.Sprintf("%d", length) + "v | %s | %v" + LineBreak
-}
-
-func init() {
-	SetScopeLength(30)
+	scopeLength = length
 }
 
 type slogInstance struct {
-	scope       string
+	scope       []string
 	fields      map[string]interface{}
 	customOut   io.Writer
 	stackOffset int
@@ -31,36 +25,40 @@ type slogInstance struct {
 	op          LogOperation
 }
 
-func getCallerString(stackOffset int) string {
-	_, fn, line, _ := runtime.Caller(stackOffset)
-	return fmt.Sprintf("%s:%d", path.Base(fn), line)
-}
+func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) string {
+	logDate := aurora.Gray(formatTime(time.Now()))
+	levelColor := levelColors[level]
+	scope := padRight(strings.Join(i.scope, " > "), scopeLength)
+	stringifiedFields := "{}"
 
-func (i *slogInstance) commonLog(str string, level LogLevel, v ...interface{}) {
-	txt := ""
-	c := levelColors[level]
-	baseString := c(fmt.Sprintf(asString(str), v...)).String()
+	if i.fields != nil {
+		stringifiedFields = buildFieldString(i.fields)
+	}
+
+	op := operationColors[i.op](padRight(string(i.op), maxOperationStringLength))
+	tag := aurora.Gray(i.tag)
+
+	logHead := logDate.String() + " " + pipeChar + " " + levelColor(aurora.Bold(level)).String() + " " + pipeChar + " " + op.String() + " " + pipeChar + " " + tag.String() + " " + pipeChar + " " + scope + " " + pipeChar + " "
 
 	if showLines {
 		cs := getCallerString(i.stackOffset)
-		baseString = fmt.Sprintf("%25s | %s", aurora.Blue(cs).String(), baseString)
+		logHead += cs + " " + pipeChar + " "
 	}
 
-	if i.fields != nil {
-		fieldsTxt := buildFieldString(i.fields)
-		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString, c(fieldsTxt))
-	} else {
-		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString)
-	}
+	logTail := pipeChar + " " + stringifiedFields
+	logHeadLength := len(stripColors(logHead))
 
-	_, _ = i.Write([]byte(txt))
+	baseString := fmt.Sprintf(asString(str), v...)
+	baseString = addPadForLines(baseString, logHeadLength)
+
+	return logHead + levelColor(baseString).String() + " " + logTail + LineBreak
+}
+
+func (i *slogInstance) commonLog(str string, level LogLevel, v ...interface{}) {
+	_, _ = i.Write([]byte(i.buildText(str, level, v...)))
 }
 
 func (i *slogInstance) argsOnlyLog(str interface{}, level LogLevel, v ...interface{}) {
-	txt := ""
-
-	c := levelColors[level]
-
 	args := append([]interface{}{str}, v...)
 
 	baseFormat := ""
@@ -68,22 +66,8 @@ func (i *slogInstance) argsOnlyLog(str interface{}, level LogLevel, v ...interfa
 	for range args {
 		baseFormat += "%v "
 	}
-	fmt.Printf("%v - %s\n", c, level)
-	baseString := c(fmt.Sprintf(baseFormat, args...)).String()
 
-	if showLines {
-		cs := getCallerString(i.stackOffset)
-		baseString = fmt.Sprintf("%25s | %s", aurora.Blue(cs).String(), baseString)
-	}
-
-	if i.fields != nil {
-		fieldsTxt := buildFieldString(i.fields)
-		txt = fmt.Sprintf(logBaseWithFieldsFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString, c(fieldsTxt))
-	} else {
-		txt = fmt.Sprintf(logBaseFormat, c(formatTime(time.Now())), c(level), c(aurora.Bold(i.scope)).String(), baseString)
-	}
-
-	_, _ = i.Write([]byte(txt))
+	_, _ = i.Write([]byte(i.buildText(baseFormat, level, args...)))
 }
 
 func (i *slogInstance) log(str interface{}, level LogLevel, v ...interface{}) {
@@ -110,15 +94,7 @@ func (i *slogInstance) Write(p []byte) (n int, err error) {
 
 func (i *slogInstance) LogNoFormat(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[INFO] {
-		ColorInfo := levelColors[INFO]
-		txt := ""
-		if i.fields != nil {
-			fieldsTxt := buildFieldString(i.fields)
-			txt = fmt.Sprintf(logBaseWithFieldsFormat, ColorInfo(formatTime(time.Now())), ColorInfo(INFO), ColorInfo(aurora.Bold(i.scope)).String(), fmt.Sprintf(asString(str), v...), fieldsTxt)
-		} else {
-			txt = fmt.Sprintf(logBaseFormat, ColorInfo(formatTime(time.Now())), ColorInfo(INFO), ColorInfo(aurora.Bold(i.scope)).String(), fmt.Sprintf(asString(str), v...))
-		}
-
+		txt := stripColors(i.buildText(asString(str), INFO, v...))
 		_, _ = i.Write([]byte(txt))
 	}
 	return i
@@ -220,13 +196,13 @@ func (i *slogInstance) WithCustomWriter(w io.Writer) Instance {
 
 func (i *slogInstance) Scope(scope string) Instance {
 	i2 := i.clone()
-	i2.scope = scope
+	i2.scope = []string{scope}
 	return i2
 }
 
 func (i *slogInstance) SubScope(scope string) Instance {
 	i2 := i.clone()
-	i2.scope = fmt.Sprintf("%s > %s", i.scope, scope)
+	i2.scope = append(i2.scope, scope)
 	return i2
 }
 
@@ -248,5 +224,7 @@ func (i *slogInstance) clone() *slogInstance {
 		scope:       i.scope,
 		customOut:   i.customOut,
 		stackOffset: i.stackOffset,
+		op:          i.op,
+		tag:         i.tag,
 	}
 }

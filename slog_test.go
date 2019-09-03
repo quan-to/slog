@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -143,10 +144,10 @@ func TestSetTestMode(t *testing.T) {
 func TestSubScope(t *testing.T) {
 	i := Scope("ABCD").SubScope("EFGH").(*slogInstance)
 
-	if strings.Index(i.scope, "ABCD") == -1 {
+	if stringSliceIndexOf("ABCD", i.scope) == -1 {
 		t.Errorf("Expected ABCD in Scope")
 	}
-	if strings.Index(i.scope, "EFGH") == -1 {
+	if stringSliceIndexOf("EFGH", i.scope) == -1 {
 		t.Errorf("Expected EFGH in Scope")
 	}
 
@@ -399,7 +400,7 @@ func TestFatal(t *testing.T) {
 
 func TestScope(t *testing.T) {
 	scoped := Scope("test-scope").(*slogInstance)
-	if scoped.scope != "test-scope" {
+	if scoped.scope[0] != "test-scope" {
 		t.Fatalf("Expected test-scope got %s", scoped.scope)
 	}
 }
@@ -504,4 +505,69 @@ func assertPanic(t *testing.T, f func(), message string) {
 		}
 	}()
 	f()
+}
+
+func TestExtensions(t *testing.T) {
+	UnsetTestMode()
+	i := Scope("Extensions")
+	i.Note("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.Await("Test %s %d %f %v", "huebr", 1, 10.0, true)   // No Crash
+	i.IO("Test %s %d %f %v", "huebr", 1, 10.0, true)      // No Crash
+	i.Done("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.Success("Test %s %d %f %v", "huebr", 1, 10.0, true) // No Crash
+}
+
+func TestTag(t *testing.T) {
+	UnsetTestMode()
+	buff := bytes.NewBufferString("")
+	i := Scope("Tag").WithCustomWriter(buff).Tag("MyHUETAG").(*slogInstance)
+	i.Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+
+	o := buff.String()
+	if strings.Index(o, "MyHUETAG") == -1 {
+		t.Errorf("Expected tag \"%s\" in output: \"%s\"", "MyHUETAG", o)
+	}
+}
+
+func TestOperation(t *testing.T) {
+	UnsetTestMode()
+	buff := bytes.NewBufferString("")
+	i := Scope("Operation").WithCustomWriter(buff).Operation(AWAIT).(*slogInstance)
+	i.Info("Test %s %d %f %v", "huebr", 1, 10.0, true)
+
+	o := buff.String()
+	if strings.Index(o, string(AWAIT)) == -1 {
+		t.Errorf("Expected operation \"%s\" in output: \"%s\"", string(AWAIT), o)
+	}
+}
+
+func TestMultiLine(t *testing.T) {
+	UnsetTestMode()
+	i := Scope("MultiLine").Operation(AWAIT).(*slogInstance)
+	i.Info("Test %s %d %f %v\nHUEBR\nLINE", "huebr", 1, 10.0, true)
+
+	// TODO: Test line padding
+}
+
+func TestInstanceScope(t *testing.T) {
+	i := Scope("MultiLine").Operation(AWAIT).(*slogInstance)
+	i2 := i.Scope("ABCD").(*slogInstance)
+
+	if i2.scope[0] != "ABCD" {
+		t.Errorf("Expected scope[0] to be ABCD got %s", i2.scope[0])
+	}
+
+	if len(i2.scope) != 1 {
+		t.Errorf("Expected scope length to be 1 got %d", len(i2.scope))
+	}
+}
+
+func TestScopeLength(t *testing.T) {
+	n := rand.Int()
+	SetScopeLength(n)
+	if scopeLength != n {
+		t.Errorf("Expected scope length to be 200")
+	}
+
+	// TODO: Check scope padding
 }
