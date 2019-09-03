@@ -1,12 +1,3 @@
-SLog - Golang Super Simple Logging
-===================================
-
-[![Apache License](https://img.shields.io/badge/License-Apache-brightgreen.svg)](https://tldrlegal.com/license/apache-license-2.0-\(apache-2.0\)) [![Coverage Status](https://coveralls.io/repos/github/quan-to/slog/badge.svg?branch=master)](https://coveralls.io/github/quan-to/slog?branch=master) [![Build Status](https://travis-ci.org/quan-to/slog.svg?branch=master)](https://travis-ci.org/quan-to/slog)
-
-
-Usage: 
-
-```go
 package main
 
 import (
@@ -60,8 +51,3 @@ func main() {
     Call1(log, "Call1Arg")
     Call2(log, "Call2Arg")
 }
-```
-
-Output:
-
-![Sample Output](https://user-images.githubusercontent.com/578310/64198701-289b6b80-ce5f-11e9-8771-88ae4e07a213.png)
