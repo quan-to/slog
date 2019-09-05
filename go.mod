@@ -1,3 +1,3 @@
 module github.com/quan-to/slog
 
-require github.com/logrusorgru/aurora v0.0.0-20181002194514-a7b3b318ed4e
+require github.com/logrusorgru/aurora v0.0.0-20190803045625-94edacc10f9b

@@ -7,93 +7,121 @@ import (
 
 // TODO: Syslog Output
 
+// FieldRepresentationType specifies which log instance fields formatting should be used
 type FieldRepresentationType int
 
 const (
+	// NoFields disables the representation of the log instance fields
 	NoFields FieldRepresentationType = iota
+	// JSONFields enables the representation of log instance fields and formats them as a json string
 	JSONFields
+	// KeyValueFields enables the representation of log instance fields and formats them as a comma separated key=value fields
 	KeyValueFields
 )
 
 // region Global
-var debugEnabled = true
-var warnEnabled = true
-var errorEnabled = true
-var infoEnabled = true
+var enabledLevels = map[LogLevel]bool{
+	DEBUG: true,
+	WARN:  true,
+	ERROR: true,
+	INFO:  true,
+}
 
 var fieldRepresentation = JSONFields
 var defaultOut io.Writer = os.Stdout
 
 var showLines = false
 
-var glog *Instance
+var glog *slogInstance
 
 func init() {
-	glog = Scope("Global")
+	glog = Scope("Global").(*slogInstance)
 	glog.stackOffset += 1 // This will be called from global context, so the stack has one more level
 }
 
-func LogNoFormat(str interface{}, v ...interface{}) *Instance {
+// LogNoFormat prints a log string without any ANSI formatting
+func LogNoFormat(str interface{}, v ...interface{}) Instance {
 	return glog.LogNoFormat(str, v...)
 }
 
-func Log(str interface{}, v ...interface{}) *Instance {
+// Log is equivalent of calling Info. It logs out a message in INFO level
+func Log(str interface{}, v ...interface{}) Instance {
 	return glog.Log(str, v...)
 }
 
-func Info(str interface{}, v ...interface{}) *Instance {
+// Info logs out a message in INFO level
+func Info(str interface{}, v ...interface{}) Instance {
 	return glog.Info(str, v...)
 }
 
-func Debug(str interface{}, v ...interface{}) *Instance {
+// Debug logs out a message in DEBUG level
+func Debug(str interface{}, v ...interface{}) Instance {
 	return glog.Debug(str, v...)
 }
 
-func Warn(str interface{}, v ...interface{}) *Instance {
+// Warn logs out a message in WARN level
+func Warn(str interface{}, v ...interface{}) Instance {
 	return glog.Warn(str, v...)
 }
 
-func Error(str interface{}, v ...interface{}) *Instance {
+// Error logs out a message in ERROR level
+func Error(str interface{}, v ...interface{}) Instance {
 	return glog.Error(str, v...)
 }
 
+// Fatal logs out a message in ERROR level and closes the program
 func Fatal(str interface{}, v ...interface{}) {
 	glog.Fatal(str, v)
 }
 
-func Scope(scope string) *Instance {
-	return &Instance{
-		scope:       scope,
+// Scope creates a new slog Instance with the specified root scope
+func Scope(scope string) Instance {
+	return &slogInstance{
+		scope:       []string{scope},
 		customOut:   defaultOut,
 		stackOffset: 4,
+		tag:         "NONE",
+		op:          MSG,
 	}
 }
 
+// SetDefaultOutput sets the Global Default Output I/O and for every new instance created by Scope function
 func SetDefaultOutput(o io.Writer) {
 	defaultOut = o
 	glog.customOut = o
 }
 
+// SetDebug globally sets if the DEBUG level messages will be shown. Affects all instances
 func SetDebug(enabled bool) {
-	debugEnabled = enabled
+	enabledLevels[DEBUG] = enabled
 }
+
+// SetWarning globally sets if the WARN level messages will be shown. Affects all instances
 func SetWarning(enabled bool) {
-	warnEnabled = enabled
+	enabledLevels[WARN] = enabled
 }
+
+// SetInfo globally sets if the INFO level messages will be shown. Affects all instances
 func SetInfo(enabled bool) {
-	infoEnabled = enabled
+	enabledLevels[INFO] = enabled
 }
+
+// SetError globally sets if the ERROR level messages will be shown. Affects all instances
 func SetError(enabled bool) {
-	errorEnabled = enabled
+	enabledLevels[ERROR] = enabled
 }
+
+// SetShowLines globally sets if the filename and line of the caller function will be shown. Affects all instances
 func SetShowLines(enabled bool) {
 	showLines = enabled
 }
 
+// SetFieldRepresentation globally sets if the representation of log fields. Affects all instances
 func SetFieldRepresentation(representationType FieldRepresentationType) {
 	fieldRepresentation = representationType
 }
 
+// SetTestMode sets the SLog Instances to test mode a.k.a. all logs disabled. Equivalent to set all levels visibility to false
 func SetTestMode() {
 	SetDebug(false)
 	SetWarning(false)
@@ -101,6 +129,7 @@ func SetTestMode() {
 	SetError(false)
 }
 
+// UnsetTestMode sets the SLog Instances to default mode a.k.a. all logs enabled. Equivalent to set all levels visibility to true
 func UnsetTestMode() {
 	SetDebug(true)
 	SetWarning(true)
@@ -108,18 +137,27 @@ func UnsetTestMode() {
 	SetError(true)
 }
 
+// DebugEnabled returns if the DEBUG level messages are currently enabled
 func DebugEnabled() bool {
-	return debugEnabled
+	return enabledLevels[DEBUG]
 }
+
+// WarningEnabled returns if the WARN level messages are currently enabled
 func WarningEnabled() bool {
-	return warnEnabled
+	return enabledLevels[WARN]
 }
+
+// InfoEnabled returns if the INFO level messages are currently enabled
 func InfoEnabled() bool {
-	return infoEnabled
+	return enabledLevels[INFO]
 }
+
+// ErrorEnabled returns if the ERROR level messages are currently enabled
 func ErrorEnabled() bool {
-	return errorEnabled
+	return enabledLevels[ERROR]
 }
+
+// ShowLinesEnabled returns if the show filename and line from called function is currently enabled
 func ShowLinesEnabled() bool {
 	return showLines
 }
