@@ -4,42 +4,43 @@ import "io"
 
 // Instance is a interface to a compatible SLog Logging Instance
 type Instance interface {
-	// Scope creates a new instance of slog with the specified scope
+	// Scope returns a new instance with the specified root scope (parent scope is discarded)
 	Scope(string) Instance
-	// SubScope creates a new instance of slog with the specified scope appened to the parent scope
+	// SubScope returns a new instance with the specified scope appended to parent scope
 	SubScope(string) Instance
-	// WithCustomWriter creates a new instance of slog with the specified writer as default output
+	// WithCustomWriter returns a new instance with the specified custom output
 	WithCustomWriter(io.Writer) Instance
-	// WithFields creates a new instance of slog with the specified fields plus the parent fields
+	// WithFields returns a new instance with the parent fields plus the current fields. If key collision happens, the value specified in fields argument will be used.
 	WithFields(map[string]interface{}) Instance
-	// Tag creates a new instance of slog with the specified tag
+	// Tag returns a new instance with the specified tag.
 	Tag(string) Instance
-	// Operation creates a new instance of slog with the specified operation
+	// Operation returns a new instance with the specified operation.
 	Operation(LogOperation) Instance
 
+	// LogNoFormat prints a log string without any ANSI formatting
 	LogNoFormat(interface{}, ...interface{}) Instance
 
-	// Info prints a INFO log entry (same as Log(INFO, ...)
+	// Info logs out a message in INFO level
 	Info(str interface{}, v ...interface{}) Instance
-	// Debug prints a DEBUG log entry (same as Log(DEBUG, ...)
+	// Debug logs out a message in DEBUG level
 	Debug(str interface{}, v ...interface{}) Instance
-	// Warn prints a WARN log entry (same as Log(WARN, ...)
+	// Warn logs out a message in WARN level
 	Warn(str interface{}, v ...interface{}) Instance
-	// Error prints a ERROR log entry (same as Log(ERROR, ...)
+	// Error logs out a message in ERROR level
 	Error(str interface{}, v ...interface{}) Instance
-	// Fatal prints a FATAL log entry (same as Log(ERROR, ...) and crashes the program
+	// Fatal logs out a message in ERROR level and closes the program
 	Fatal(str interface{}, v ...interface{})
 
-	// Note prints a INFO log entry with operation NOTE (same as Operation(NOTE).Log(INFO, ...)
+	// Note logs out a message in INFO level and with Operation NOTE. Returns an instance of operation NOTE
 	Note(interface{}, ...interface{}) Instance
-	// Await prints a INFO log entry with operation AWAIT (same as Operation(AWAIT).Log(INFO, ...)
+	// Await logs out a message in INFO level and with Operation AWAIT. Returns an instance of operation AWAIT
 	Await(interface{}, ...interface{}) Instance
-	// Done prints a INFO log entry with operation DONE (same as Operation(DONE).Log(INFO, ...)
+	// Done logs out a message in INFO level and with Operation DONE. Returns an instance of operation DONE
 	Done(interface{}, ...interface{}) Instance
-	// Success prints a INFO log entry with operation DONE (same as Done(...))
+	// Success logs out a message in INFO level and with Operation DONE. Returns an instance of operation DONE
 	Success(interface{}, ...interface{}) Instance
-	// IO prints a INFO log entry with operation IO (same as Operation(IO).Log(INFO, ...)
+	// IO logs out a message in INFO level and with Operation IO. Returns an instance of operation IO
 	IO(interface{}, ...interface{}) Instance
-	// Log same as Info
+	// Log is equivalent of calling Info. It logs out a message in INFO level
 	Log(interface{}, ...interface{}) Instance
 }

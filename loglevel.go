@@ -2,13 +2,21 @@ package slog
 
 import "github.com/logrusorgru/aurora"
 
+// LogLevel type specifies the level of log to be used
 type LogLevel string
 
 const (
-	INFO  LogLevel = "I"
-	WARN           = "W"
-	ERROR          = "E"
-	DEBUG          = "D"
+	// INFO represents a Information Log Level (or verbose)
+	INFO LogLevel = "I"
+
+	// WARN represents a Warning Log Level
+	WARN = "W"
+
+	// ERROR represents an error message
+	ERROR = "E"
+
+	// DEBUG represents an debug message
+	DEBUG = "D"
 )
 
 var levelColors = map[LogLevel]colorFunc{

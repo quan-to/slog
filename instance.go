@@ -83,6 +83,7 @@ func (i *slogInstance) log(str interface{}, level LogLevel, v ...interface{}) {
 	}
 }
 
+// Write writes bytes to the instance output
 func (i *slogInstance) Write(p []byte) (n int, err error) {
 	if i.customOut != nil {
 		return i.customOut.Write(p)
@@ -92,6 +93,7 @@ func (i *slogInstance) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// LogNoFormat prints a log string without any ANSI formatting
 func (i *slogInstance) LogNoFormat(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[INFO] {
 		txt := stripColors(i.buildText(asString(str), INFO, v...))
@@ -100,6 +102,7 @@ func (i *slogInstance) LogNoFormat(str interface{}, v ...interface{}) Instance {
 	return i
 }
 
+// Log is equivalent of calling Info. It logs out a message in INFO level
 func (i *slogInstance) Log(str interface{}, v ...interface{}) Instance {
 	// Do not call i.Info, to not change the stack and break filename:line
 	if enabledLevels[INFO] {
@@ -108,6 +111,7 @@ func (i *slogInstance) Log(str interface{}, v ...interface{}) Instance {
 	return i
 }
 
+// Info logs out a message in INFO level
 func (i *slogInstance) Info(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[INFO] {
 		i.log(str, INFO, v...)
@@ -115,6 +119,7 @@ func (i *slogInstance) Info(str interface{}, v ...interface{}) Instance {
 	return i
 }
 
+// Debug logs out a message in DEBUG level
 func (i *slogInstance) Debug(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[DEBUG] {
 		i.log(str, DEBUG, v...)
@@ -122,6 +127,7 @@ func (i *slogInstance) Debug(str interface{}, v ...interface{}) Instance {
 	return i
 }
 
+// Warn logs out a message in WARN level
 func (i *slogInstance) Warn(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[WARN] {
 		i.log(str, WARN, v...)
@@ -129,6 +135,7 @@ func (i *slogInstance) Warn(str interface{}, v ...interface{}) Instance {
 	return i
 }
 
+// Error logs out a message in ERROR level
 func (i *slogInstance) Error(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[ERROR] {
 		i.log(str, ERROR, v...)
@@ -136,6 +143,7 @@ func (i *slogInstance) Error(str interface{}, v ...interface{}) Instance {
 	return i
 }
 
+// Fatal logs out a message in ERROR level and closes the program
 func (i *slogInstance) Fatal(str interface{}, v ...interface{}) {
 	varargs := v
 	if len(varargs) == 1 && reflect.TypeOf(v[0]) == reflect.TypeOf([]interface{}{}) {
@@ -153,26 +161,32 @@ func (i *slogInstance) Fatal(str interface{}, v ...interface{}) {
 	panic(msg)
 }
 
+// Note logs out a message in INFO level and with Operation NOTE. Returns an instance of operation NOTE
 func (i *slogInstance) Note(str interface{}, v ...interface{}) Instance {
 	return i.Operation(NOTE).Info(str, v...)
 }
 
+// Await logs out a message in INFO level and with Operation AWAIT. Returns an instance of operation AWAIT
 func (i *slogInstance) Await(str interface{}, v ...interface{}) Instance {
 	return i.Operation(AWAIT).Info(str, v...)
 }
 
+// Done logs out a message in INFO level and with Operation DONE. Returns an instance of operation DONE
 func (i *slogInstance) Done(str interface{}, v ...interface{}) Instance {
 	return i.Operation(DONE).Info(str, v...)
 }
 
+// Success logs out a message in INFO level and with Operation DONE. Returns an instance of operation DONE
 func (i *slogInstance) Success(str interface{}, v ...interface{}) Instance {
-	return i.Done(str, v...)
+	return i.Operation(DONE).Info(str, v...)
 }
 
+// IO logs out a message in INFO level and with Operation IO. Returns an instance of operation IO
 func (i *slogInstance) IO(str interface{}, v ...interface{}) Instance {
 	return i.Operation(IO).Info(str, v...)
 }
 
+// WithFields returns a new instance with the parent fields plus the current fields. If key collision happens, the value specified in fields argument will be used.
 func (i *slogInstance) WithFields(fields map[string]interface{}) Instance {
 	if i.fields != nil {
 		// Append Parent fields
@@ -188,30 +202,35 @@ func (i *slogInstance) WithFields(fields map[string]interface{}) Instance {
 	return i2
 }
 
+// WithCustomWriter returns a new instance with the specified custom output
 func (i *slogInstance) WithCustomWriter(w io.Writer) Instance {
 	i2 := i.clone()
 	i2.customOut = w
 	return i2
 }
 
+// Scope returns a new instance with the specified root scope (parent scope is discarded)
 func (i *slogInstance) Scope(scope string) Instance {
 	i2 := i.clone()
 	i2.scope = []string{scope}
 	return i2
 }
 
+// SubScope returns a new instance with the specified scope appended to parent scope
 func (i *slogInstance) SubScope(scope string) Instance {
 	i2 := i.clone()
 	i2.scope = append(i2.scope, scope)
 	return i2
 }
 
+// Tag returns a new instance with the specified tag.
 func (i *slogInstance) Tag(tag string) Instance {
 	i2 := i.clone()
 	i2.tag = tag
 	return i2
 }
 
+// Operation returns a new instance with the specified operation.
 func (i *slogInstance) Operation(op LogOperation) Instance {
 	i2 := i.clone()
 	i2.op = op
