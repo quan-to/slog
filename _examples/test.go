@@ -40,11 +40,16 @@ func call2(i slog.Instance, pop string) {
 }
 
 func main() {
+    slog.SetShowLines(true)
     slog.SetScopeLength(40) // Expand Scope pad length
 
     log = log.Tag("REQ001") // Tag current as REQ001
 
     log.Info("Starting program")
+    t := log.Operation(slog.AWAIT)
+
+    t.Operation(slog.AWAIT).Info("HUE TESTE STACK O")
+    t.Info("HUE TESTE STACK")
     
     call0(log, "MyArg0")
 

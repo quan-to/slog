@@ -25,6 +25,11 @@ type slogInstance struct {
 	op          LogOperation
 }
 
+func (i *slogInstance) incStackOffset() *slogInstance {
+	i.stackOffset++
+	return i
+}
+
 func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) string {
 	logDate := aurora.Gray(7, formatTime(time.Now()))
 	levelColor := levelColors[level]
@@ -163,27 +168,27 @@ func (i *slogInstance) Fatal(str interface{}, v ...interface{}) {
 
 // Note logs out a message in INFO level and with Operation NOTE. Returns an instance of operation NOTE
 func (i *slogInstance) Note(str interface{}, v ...interface{}) Instance {
-	return i.Operation(NOTE).Info(str, v...)
+	return i.clone().incStackOffset().Operation(NOTE).Info(str, v...)
 }
 
 // Await logs out a message in INFO level and with Operation AWAIT. Returns an instance of operation AWAIT
 func (i *slogInstance) Await(str interface{}, v ...interface{}) Instance {
-	return i.Operation(AWAIT).Info(str, v...)
+	return i.clone().incStackOffset().Operation(AWAIT).Info(str, v...)
 }
 
 // Done logs out a message in INFO level and with Operation DONE. Returns an instance of operation DONE
 func (i *slogInstance) Done(str interface{}, v ...interface{}) Instance {
-	return i.Operation(DONE).Info(str, v...)
+	return i.clone().incStackOffset().Operation(DONE).Info(str, v...)
 }
 
 // Success logs out a message in INFO level and with Operation DONE. Returns an instance of operation DONE
 func (i *slogInstance) Success(str interface{}, v ...interface{}) Instance {
-	return i.Operation(DONE).Info(str, v...)
+	return i.clone().incStackOffset().Operation(DONE).Info(str, v...)
 }
 
 // IO logs out a message in INFO level and with Operation IO. Returns an instance of operation IO
 func (i *slogInstance) IO(str interface{}, v ...interface{}) Instance {
-	return i.Operation(IO).Info(str, v...)
+	return i.clone().incStackOffset().Operation(IO).Info(str, v...)
 }
 
 // WithFields returns a new instance with the parent fields plus the current fields. If key collision happens, the value specified in fields argument will be used.

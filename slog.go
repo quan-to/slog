@@ -79,7 +79,7 @@ func Scope(scope string) Instance {
 	return &slogInstance{
 		scope:       []string{scope},
 		customOut:   defaultOut,
-		stackOffset: 4,
+		stackOffset: 5,
 		tag:         "NONE",
 		op:          MSG,
 	}
