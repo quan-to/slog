@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -163,7 +164,7 @@ func (i *slogInstance) Fatal(str interface{}, v ...interface{}) {
 	}
 
 	i.log(msg, ERROR)
-	panic(msg)
+	os.Exit(1)
 }
 
 // WithFields returns a new instance with the parent fields plus the current fields. If key collision happens, the value specified in fields argument will be used.
