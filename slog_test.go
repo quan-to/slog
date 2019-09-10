@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/bouk/monkey"
 	"math/rand"
 	"os"
 	"strings"
@@ -390,12 +391,18 @@ func TestLogNoFormat(t *testing.T) {
 }
 
 func TestFatal(t *testing.T) {
+	fakeExit := func(int) {
+		panic("os.Exit called")
+	}
+	patch := monkey.Patch(os.Exit, fakeExit)
+	defer patch.Unpatch()
+
 	assertPanic(t, func() {
 		Fatal("Test Fatal")
-	}, "Fatal should panic")
+	}, "Fatal should os.Exit")
 	assertPanic(t, func() {
 		Fatal("Test %s %d %f %v", "huebr", 1, 10.0, true)
-	}, "Fatal should panic")
+	}, "Fatal should os.Exit")
 }
 
 func TestScope(t *testing.T) {

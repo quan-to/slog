@@ -15,6 +15,9 @@ const (
 	// ERROR represents an error message
 	ERROR = "E"
 
+	// FATAL represents an fatal message
+	FATAL = "F"
+
 	// DEBUG represents an debug message
 	DEBUG = "D"
 )
@@ -24,4 +27,5 @@ var levelColors = map[LogLevel]colorFunc{
 	WARN:  aurora.Yellow,
 	ERROR: aurora.Red,
 	DEBUG: aurora.Magenta,
+	FATAL: aurora.Red,
 }

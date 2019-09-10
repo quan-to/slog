@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -163,7 +164,12 @@ func (i *slogInstance) Fatal(str interface{}, v ...interface{}) {
 		msg = fmt.Sprintf(asString(str), varargs...)
 	}
 
-	i.log(msg, ERROR)
+	i.log(msg, FATAL)
+
+	stack := string(debug.Stack())
+
+	i.log(stack, FATAL)
+
 	os.Exit(1)
 }
 
