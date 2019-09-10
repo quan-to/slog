@@ -25,6 +25,7 @@ var enabledLevels = map[LogLevel]bool{
 	WARN:  true,
 	ERROR: true,
 	INFO:  true,
+	FATAL: true,
 }
 
 var fieldRepresentation = JSONFields

@@ -53,7 +53,7 @@ func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) s
 	}
 
 	logTail := pipeChar + " " + stringifiedFields
-	logHeadLength := len(stripColors(logHead))
+	logHeadLength := len(stripColors(logHead)) + 1
 
 	baseString := fmt.Sprintf(asString(str), v...)
 	baseString = addPadForLines(baseString, logHeadLength)
@@ -103,8 +103,10 @@ func (i *slogInstance) Write(p []byte) (n int, err error) {
 // LogNoFormat prints a log string without any ANSI formatting
 func (i *slogInstance) LogNoFormat(str interface{}, v ...interface{}) Instance {
 	if enabledLevels[INFO] {
+		i.stackOffset -= 2
 		txt := stripColors(i.buildText(asString(str), INFO, v...))
 		_, _ = i.Write([]byte(txt))
+		i.stackOffset += 2
 	}
 	return i
 }
