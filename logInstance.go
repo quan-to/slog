@@ -43,4 +43,22 @@ type Instance interface {
 	IO(interface{}, ...interface{}) Instance
 	// Log is equivalent of calling Info. It logs out a message in INFO level
 	Log(interface{}, ...interface{}) Instance
+
+	WarnDone(interface{}, ...interface{}) Instance
+	WarnNote(interface{}, ...interface{}) Instance
+	WarnAwait(interface{}, ...interface{}) Instance
+	WarnSuccess(interface{}, ...interface{}) Instance
+	WarnIO(interface{}, ...interface{}) Instance
+
+	ErrorDone(interface{}, ...interface{}) Instance
+	ErrorNote(interface{}, ...interface{}) Instance
+	ErrorAwait(interface{}, ...interface{}) Instance
+	ErrorSuccess(interface{}, ...interface{}) Instance
+	ErrorIO(interface{}, ...interface{}) Instance
+
+	DebugDone(interface{}, ...interface{}) Instance
+	DebugNote(interface{}, ...interface{}) Instance
+	DebugAwait(interface{}, ...interface{}) Instance
+	DebugSuccess(interface{}, ...interface{}) Instance
+	DebugIO(interface{}, ...interface{}) Instance
 }

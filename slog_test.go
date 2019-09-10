@@ -510,11 +510,30 @@ func assertPanic(t *testing.T, f func(), message string) {
 func TestExtensions(t *testing.T) {
 	UnsetTestMode()
 	i := Scope("Extensions")
+
 	i.Note("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
 	i.Await("Test %s %d %f %v", "huebr", 1, 10.0, true)   // No Crash
 	i.IO("Test %s %d %f %v", "huebr", 1, 10.0, true)      // No Crash
 	i.Done("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
 	i.Success("Test %s %d %f %v", "huebr", 1, 10.0, true) // No Crash
+
+	i.WarnNote("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.WarnAwait("Test %s %d %f %v", "huebr", 1, 10.0, true)   // No Crash
+	i.WarnIO("Test %s %d %f %v", "huebr", 1, 10.0, true)      // No Crash
+	i.WarnDone("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.WarnSuccess("Test %s %d %f %v", "huebr", 1, 10.0, true) // No Crash
+
+	i.ErrorNote("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.ErrorAwait("Test %s %d %f %v", "huebr", 1, 10.0, true)   // No Crash
+	i.ErrorIO("Test %s %d %f %v", "huebr", 1, 10.0, true)      // No Crash
+	i.ErrorDone("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.ErrorSuccess("Test %s %d %f %v", "huebr", 1, 10.0, true) // No Crash
+
+	i.DebugNote("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.DebugAwait("Test %s %d %f %v", "huebr", 1, 10.0, true)   // No Crash
+	i.DebugIO("Test %s %d %f %v", "huebr", 1, 10.0, true)      // No Crash
+	i.DebugDone("Test %s %d %f %v", "huebr", 1, 10.0, true)    // No Crash
+	i.DebugSuccess("Test %s %d %f %v", "huebr", 1, 10.0, true) // No Crash
 }
 
 func TestTag(t *testing.T) {
