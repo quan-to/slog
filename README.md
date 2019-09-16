@@ -80,17 +80,17 @@ DATETIME | LEVEL | OPERATION | TAG | SCOPE | [FILENAME:LINE NUMBER] | MESSAGE | 
 ```
 
 *   `DATETIME` => An ISO Datetime when the log is displayed
-*   `LEVEL` => The level of the log line.
+*   `LEVEL` => The level of the log line
     *   `I` => INFO - Shows a information usually to track what's happening inside an application
     *   `W` => WARN - Shows a warning regarding something that went in a way that might require some attention
     *   `E` => ERROR - Shows a application error that can be expected or not
     *   `D` => DEBUG - Shows some debug information to help tracking issues
     *   `F` => FATAL - Shows an error that will quit the application in that point
 *   `TAG` => Line log tag. Use this for tracking related log lines. For example with a HTTP Request ID
-*   `SCOPE` => The scope of the current log. Use this to trace the chain of calls inside the application. For example in a context change.
-*   `FILENAME: LINE NUMBER` => *OPTIONAL* When ShowLines is enabled, it will show the filename and the line number of the caller of the slog library. Use this on debug mode to see which piece of code called the log library. Disabled by default.
+*   `SCOPE` => The scope of the current log. Use this to trace the chain of calls inside the application. For example in a context change
+*   `FILENAME: LINE NUMBER` => *OPTIONAL* When ShowLines is enabled, it will show the filename and the line number of the caller of the slog library. Use this on debug mode to see which piece of code called the log library. Disabled by default
 *   `MESSAGE` => The message
-*   `LOG FIELDS` => When an instance is created using `WithFields` call, the fields will be serialized to either JSON or Key-Value depending on the configuration of the log instance. Defaults to JSON.
+*   `LOG FIELDS` => When an instance is created using `WithFields` call, the fields will be serialized to either JSON or Key-Value depending on the configuration of the log instance. Defaults to JSON
 
 If a multiline log is displayed, the library will correctly ident all the messages:
 
