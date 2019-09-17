@@ -143,4 +143,4 @@ If a multiline log is displayed, the library will correctly ident all the messag
 *   Avoid using pipes `|` in your log message or fields
 *   Instead of `Operation(AWAIT).Warn` use `WarnAwait`
 *   Use `Tag` to indentify calls in the same flow (for example on a HTTP Request)
-
+*   All `LogInstance` calls returns a new `LogInstance` with the modified data. It will never change it's parent data making it completely immutable.
