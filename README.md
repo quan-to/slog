@@ -92,6 +92,41 @@ DATETIME | LEVEL | OPERATION | TAG | SCOPE | [FILENAME:LINE NUMBER] | MESSAGE | 
 *   `MESSAGE` => The message
 *   `LOG FIELDS` => When an instance is created using `WithFields` call, the fields will be serialized to either JSON or Key-Value depending on the configuration of the log instance. Defaults to JSON
 
+#### Operations Usage
+
+The library implements the concept of operation type. This describes which type of operation the log line represents.
+
+*   `IO` => Anytime you do a I/O Operation such as Database or File Read/Write
+*   `AWAIT` => Anytime you will do a asynchronous operation that will block the flow
+*   `DONE` => 
+*   `NOTE` => Also know as Verbose, that operation is used when you're just letting the log reader some note about the operation
+*   `MSG` => Common messages such like normal information (which does not fit in other operations)
+
+There are some syntax sugars to make easy to use Log Levels with Log Operations together:
+
+* Warning Messages
+    *   `WarnDone` => Same as log.Operation(DONE).Warn(message)
+    *   `WarnNote` => Same as log.Operation(NOTE).Warn(message)
+    *   `WarnAwait` => Same as log.Operation(AWAIT).Warn(message)
+    *   `WarnSuccess` => Same as log.Operation(DONE).Warn(message)
+    *   `WarnIO` => Same as log.Operation(IO).Warn(message)
+* Error Messages
+    *   `ErrorDone` => Same as log.Operation(DONE).Error(message)
+    *   `ErrorNote` => Same as log.Operation(NOTE).Error(message)
+    *   `ErrorAwait` => Same as log.Operation(AWAIT).Error(message)
+    *   `ErrorSuccess` => Same as log.Operation(DONE).Error(message)
+    *   `ErrorIO` => Same as log.Operation(IO).Error(message)
+* Debug Messages
+    *   `DebugDone` => Same as log.Operation(DONE).Debug(message)
+    *   `DebugNote` => Same as log.Operation(NOTE).Debug(message)
+    *   `DebugAwait` => Same as log.Operation(AWAIT).Debug(message)
+    *   `DebugSuccess` => Same as log.Operation(DONE).Debug(message)
+    *   `DebugIO` => Same as log.Operation(IO).Debug(message)
+
+Use these syntax sugars whenever is possible, instead of calling `Operation(X).Level` directly.
+
+### Multiline Logs
+
 If a multiline log is displayed, the library will correctly ident all the messages:
 
 ```
