@@ -81,9 +81,9 @@ DATETIME | LEVEL | OPERATION | TAG | SCOPE | [FILENAME:LINE NUMBER] | MESSAGE | 
 
 *   `DATETIME` => An ISO Datetime when the log is displayed
 *   `LEVEL` => The level of the log line
-    *   `I` => INFO - Shows a information usually to track what's happening inside an application
-    *   `W` => WARN - Shows a warning regarding something that went in a way that might require some attention
-    *   `E` => ERROR - Shows a application error that can be expected or not
+    *   `I` => INFO - Shows an information usually to track what's happening inside an application
+    *   `W` => WARN - Shows an warning regarding something that went in a way that might require some attention
+    *   `E` => ERROR - Shows an application error that can be expected or not
     *   `D` => DEBUG - Shows some debug information to help tracking issues
     *   `F` => FATAL - Shows an error that will quit the application in that point
 *   `TAG` => Line log tag. Use this for tracking related log lines. For example with a HTTP Request ID
