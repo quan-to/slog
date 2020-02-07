@@ -3,6 +3,7 @@ package slog
 import (
 	"io"
 	"os"
+	"strings"
 )
 
 // TODO: Syslog Output
@@ -19,6 +20,25 @@ const (
 	KeyValueFields
 )
 
+// Format specifies the logging format (could be pipe separated, JSON, ...)
+type Format string
+
+const (
+	JSON Format = "json"
+	PIPE Format = "pipe"
+)
+
+func ToFormat(s string) Format {
+	switch strings.ToLower(s) {
+	case string(JSON):
+		return JSON
+	case string(PIPE):
+		return PIPE
+	default:
+		return PIPE
+	}
+}
+
 // region Global
 var enabledLevels = map[LogLevel]bool{
 	DEBUG: true,
@@ -29,6 +49,7 @@ var enabledLevels = map[LogLevel]bool{
 }
 
 var fieldRepresentation = JSONFields
+var logFormat = PIPE
 var defaultOut io.Writer = os.Stdout
 
 var showLines = false
@@ -120,6 +141,11 @@ func SetShowLines(enabled bool) {
 // SetFieldRepresentation globally sets if the representation of log fields. Affects all instances
 func SetFieldRepresentation(representationType FieldRepresentationType) {
 	fieldRepresentation = representationType
+}
+
+// SetLogFormat globally sets the logging format. Affects all instances
+func SetLogFormat(f Format) {
+	logFormat = f
 }
 
 // SetTestMode sets the SLog Instances to test mode a.k.a. all logs disabled. Equivalent to set all levels visibility to false

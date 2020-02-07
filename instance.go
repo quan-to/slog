@@ -33,6 +33,18 @@ func (i *slogInstance) incStackOffset() *slogInstance {
 }
 
 func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) string {
+	switch logFormat {
+	case JSON:
+		return i.buildJsonLog(str, level, v...)
+	case PIPE:
+		return i.buildPipedLog(str, level, v...)
+	default:
+		_, _ = i.Write([]byte(fmt.Sprintf("Untreated log format %+v\n", logFormat)))
+		return i.buildPipedLog(str, level, v...)
+	}
+}
+
+func (i *slogInstance) buildPipedLog(str string, level LogLevel, v ...interface{}) string {
 	logDate := aurora.Gray(7, formatTime(time.Now()))
 	levelColor := levelColors[level]
 	scope := padRight(strings.Join(i.scope, " > "), scopeLength)
@@ -59,6 +71,27 @@ func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) s
 	baseString = addPadForLines(baseString, logHeadLength)
 
 	return logHead + levelColor(baseString).String() + " " + logTail + LineBreak
+}
+
+func (i *slogInstance) buildJsonLog(str string, level LogLevel, v ...interface{}) string {
+	jsonFields := i.fields
+
+	if jsonFields == nil {
+		jsonFields = make(map[string]interface{})
+	}
+
+	jsonFields["time"] = formatTime(time.Now())
+	jsonFields["scope"] = strings.Join(i.scope, " - ")
+	jsonFields["op"] = i.op
+	jsonFields["tag"] = i.tag
+	jsonFields["level"] = getDescription(level)
+	jsonFields["msg"] = fmt.Sprintf(asString(str), v...)
+
+	if showLines {
+		jsonFields["lines"] = getCallerString(i.stackOffset)
+	}
+
+	return buildJson(jsonFields) + LineBreak
 }
 
 func (i *slogInstance) commonLog(str string, level LogLevel, v ...interface{}) {

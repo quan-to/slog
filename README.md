@@ -68,6 +68,13 @@ Output:
 
 ### Log Pattern
 
+There are 2 types of outputs: Pipe Delimited Text (default) and JSON.  
+To change the type of output, call the function SetLogFormat:
+```
+slog.SetLogFormat(JSON)
+```
+
+#### Pipe Delimited Text
 The slog output is expected to be like this:
 
 ```
@@ -92,7 +99,23 @@ DATETIME | LEVEL | OPERATION | TAG | SCOPE | [FILENAME:LINE NUMBER] | MESSAGE | 
 *   `MESSAGE` => The message
 *   `LOG FIELDS` => When an instance is created using `WithFields` call, the fields will be serialized to either JSON or Key-Value depending on the configuration of the log instance. Defaults to JSON
 
-#### Operations Usage
+#### JSON
+The output is expected to be in this format:
+```
+{
+  "level":"info",
+  "op":"MSG",
+  "msg":"Processing rule 123",
+  "scope":"PriceCalc",
+  "tag":"RULE_ENGINE",
+  "time":"2020-02-07T15:36:20-03:00",
+  "customField01":"123"
+}
+```
+
+The fields are the same as from **Pipe Delimited Text** and work the same way, except that the Key-Value option is not available for the `LOG FIELDS`. 
+
+### Operations Usage
 
 The library implements the concept of operation type. This describes which type of operation the log line represents.
 
