@@ -17,7 +17,7 @@ func buildFieldString(data map[string]interface{}) string {
 	retVal := ""
 	switch fieldRepresentation {
 	case JSONFields:
-		retVal = buildJson(data)
+		retVal = buildJSON(data)
 	case KeyValueFields:
 		for k, v := range data {
 			retVal += fmt.Sprintf("%s=%v,", k, v)
@@ -27,7 +27,7 @@ func buildFieldString(data map[string]interface{}) string {
 	return retVal
 }
 
-func buildJson(data map[string]interface{}) string {
+func buildJSON(data map[string]interface{}) string {
 	v, _ := json.Marshal(data)
 	return string(v)
 }

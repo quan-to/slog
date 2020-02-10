@@ -35,7 +35,7 @@ func (i *slogInstance) incStackOffset() *slogInstance {
 func (i *slogInstance) buildText(str string, level LogLevel, v ...interface{}) string {
 	switch logFormat {
 	case JSON:
-		return i.buildJsonLog(str, level, v...)
+		return i.buildJSONLog(str, level, v...)
 	case PIPE:
 		return i.buildPipedLog(str, level, v...)
 	default:
@@ -73,7 +73,7 @@ func (i *slogInstance) buildPipedLog(str string, level LogLevel, v ...interface{
 	return logHead + levelColor(baseString).String() + " " + logTail + LineBreak
 }
 
-func (i *slogInstance) buildJsonLog(str string, level LogLevel, v ...interface{}) string {
+func (i *slogInstance) buildJSONLog(str string, level LogLevel, v ...interface{}) string {
 	jsonFields := i.fields
 
 	if jsonFields == nil {
@@ -91,7 +91,7 @@ func (i *slogInstance) buildJsonLog(str string, level LogLevel, v ...interface{}
 		jsonFields["lines"] = getCallerString(i.stackOffset)
 	}
 
-	return buildJson(jsonFields) + LineBreak
+	return buildJSON(jsonFields) + LineBreak
 }
 
 func (i *slogInstance) commonLog(str string, level LogLevel, v ...interface{}) {

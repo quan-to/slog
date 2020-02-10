@@ -24,10 +24,13 @@ const (
 type Format string
 
 const (
+	// JSON specifies to log in JSON format
 	JSON Format = "json"
+	// PIPE specifies to log in Pipe Delimited Text format
 	PIPE Format = "pipe"
 )
 
+// ToFormat converts a string to  its corresponding Format type
 func ToFormat(s string) Format {
 	switch strings.ToLower(s) {
 	case string(JSON):
