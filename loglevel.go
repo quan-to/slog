@@ -29,3 +29,19 @@ var levelColors = map[LogLevel]colorFunc{
 	DEBUG: aurora.Magenta,
 	FATAL: aurora.Red,
 }
+
+var levelDescription = map[LogLevel]string{
+	INFO:  "info",
+	WARN:  "warn",
+	ERROR: "error",
+	DEBUG: "debug",
+	FATAL: "fatal",
+}
+
+func getDescription(level LogLevel) string {
+	l := levelDescription[level]
+	if l == "" {
+		l = string(level)
+	}
+	return l
+}

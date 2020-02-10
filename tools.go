@@ -17,8 +17,7 @@ func buildFieldString(data map[string]interface{}) string {
 	retVal := ""
 	switch fieldRepresentation {
 	case JSONFields:
-		v, _ := json.Marshal(data)
-		retVal = string(v)
+		retVal = buildJSON(data)
 	case KeyValueFields:
 		for k, v := range data {
 			retVal += fmt.Sprintf("%s=%v,", k, v)
@@ -26,6 +25,11 @@ func buildFieldString(data map[string]interface{}) string {
 	}
 
 	return retVal
+}
+
+func buildJSON(data map[string]interface{}) string {
+	v, _ := json.Marshal(data)
+	return string(v)
 }
 
 // formatTime returns the specified Date in ISO format (RFC3339)

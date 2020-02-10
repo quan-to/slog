@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bouk/monkey"
-	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -589,11 +588,138 @@ func TestInstanceScope(t *testing.T) {
 }
 
 func TestScopeLength(t *testing.T) {
-	n := rand.Int()
+	n := 15
 	SetScopeLength(n)
-	if scopeLength != n {
-		t.Errorf("Expected scope length to be 200")
+	if scopeLength != 15 {
+		t.Errorf("Expected scope length to be 15")
 	}
 
 	// TODO: Check scope padding
+}
+
+func TestToFormat(t *testing.T) {
+	testCases := []struct {
+		name           string
+		input          string
+		expectedFormat Format
+	}{
+		{
+			name:           "input is JSON",
+			input:          "jSoN",
+			expectedFormat: JSON,
+		},
+		{
+			name:           "input is pipe",
+			input:          "PIPE",
+			expectedFormat: PIPE,
+		},
+		{
+			name:           "input is empty",
+			input:          "",
+			expectedFormat: PIPE,
+		},
+		{
+			name:           "input is invalid string",
+			input:          "abcde",
+			expectedFormat: PIPE,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := ToFormat(tc.input)
+			if result != tc.expectedFormat {
+				t.Errorf("Got %q want %q.", result, tc.expectedFormat)
+			}
+		})
+	}
+}
+
+func TestJsonFormat(t *testing.T) {
+	defer func() {
+		SetLogFormat(PIPE)
+		SetShowLines(false)
+	}()
+
+	SetLogFormat(JSON)
+	SetShowLines(true)
+
+	buff := bytes.NewBufferString("")
+	i := Scope("UnitTest").WithCustomWriter(buff)
+	i = i.SubScope("Test")
+	i = i.Operation(NOTE)
+	i = i.Tag("CLASSIFICATION")
+	i = i.WithFields(map[string]interface{}{"customField": "123"})
+	i.Info("Test message as JSON %s", "test")
+
+	var values map[string]interface{}
+	json.Unmarshal(buff.Bytes(), &values)
+
+	if values["time"] == "" {
+		t.Errorf("Got empty want not empty.")
+	}
+
+	if values["scope"] != "UnitTest - Test" {
+		t.Errorf("Got %q want %q.", values["scope"], "UnitTest")
+	}
+
+	if values["op"] != "NOTE" {
+		t.Errorf("Got %q want %q.", values["op"], "NOTE")
+	}
+
+	if values["tag"] != "CLASSIFICATION" {
+		t.Errorf("Got %q want %q.", values["tag"], "CLASSIFICATION")
+	}
+
+	if values["level"] != "info" {
+		t.Errorf("Got %q want %q.", values["level"], "info")
+	}
+
+	if values["msg"] != "Test message as JSON test" {
+		t.Errorf("Got %q want %q.", values["msg"], "")
+	}
+
+	if values["customField"] != "123" {
+		t.Errorf("Got %q want %q.", values["customField"], "123")
+	}
+
+	if values["lines"] == "" {
+		t.Errorf("Got empty want not empty.")
+	}
+}
+
+func TestLogWithoutCustomValue(t *testing.T) {
+	defer func() {
+		SetLogFormat(PIPE)
+	}()
+
+	SetLogFormat(JSON)
+
+	buff := bytes.NewBufferString("")
+	i := Scope("UnitTest").WithCustomWriter(buff)
+	i.Info("Test message as JSON %s", "test")
+
+	var values map[string]interface{}
+	json.Unmarshal(buff.Bytes(), &values)
+
+	if _, ok := values["customField"]; ok {
+		t.Errorf("Got %q want ''.", values["customField"])
+	}
+}
+
+func TestLogWithInvalidLogFormat(t *testing.T) {
+	defer func() {
+		SetLogFormat(PIPE)
+	}()
+
+	var ABC Format = "abc"
+	SetLogFormat(ABC)
+
+	buff := bytes.NewBufferString("")
+	i := Scope("UnitTestInvalidLogFormat").WithCustomWriter(buff)
+	i.Info("Test message as JSON %s", "test")
+
+	if !strings.Contains(buff.String(), "Untreated log format abc") {
+		t.Errorf("Got %v, want to contain 'Untreated log format abc'.", buff.String())
+	}
 }
