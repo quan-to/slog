@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bouk/monkey"
-	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -589,10 +588,10 @@ func TestInstanceScope(t *testing.T) {
 }
 
 func TestScopeLength(t *testing.T) {
-	n := rand.Int()
+	n := 15
 	SetScopeLength(n)
-	if scopeLength != n {
-		t.Errorf("Expected scope length to be 200")
+	if scopeLength != 15 {
+		t.Errorf("Expected scope length to be 15")
 	}
 
 	// TODO: Check scope padding
@@ -705,5 +704,22 @@ func TestLogWithoutCustomValue(t *testing.T) {
 
 	if _, ok := values["customField"]; ok {
 		t.Errorf("Got %q want ''.", values["customField"])
+	}
+}
+
+func TestLogWithInvalidLogFormat(t *testing.T) {
+	defer func() {
+		SetLogFormat(PIPE)
+	}()
+
+	var ABC Format = "abc"
+	SetLogFormat(ABC)
+
+	buff := bytes.NewBufferString("")
+	i := Scope("UnitTestInvalidLogFormat").WithCustomWriter(buff)
+	i.Info("Test message as JSON %s", "test")
+
+	if !strings.Contains(buff.String(), "Untreated log format abc") {
+		t.Errorf("Got %v, want to contain 'Untreated log format abc'.", buff.String())
 	}
 }
