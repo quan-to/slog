@@ -5,6 +5,8 @@ import (
 )
 
 func TestGetDescription(t *testing.T) {
+	var LA LogLevel = "LA"
+
 	testCases := []struct {
 		name                string
 		level               LogLevel
@@ -34,6 +36,11 @@ func TestGetDescription(t *testing.T) {
 			name:                "input is DEBUG",
 			level:               DEBUG,
 			expectedDescription: "debug",
+		},
+		{
+			name:                "input with no description",
+			level:               LA,
+			expectedDescription: "LA",
 		},
 	}
 

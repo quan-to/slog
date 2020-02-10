@@ -688,3 +688,22 @@ func TestJsonFormat(t *testing.T) {
 		t.Errorf("Got empty want not empty.")
 	}
 }
+
+func TestLogWithoutCustomValue(t *testing.T) {
+	defer func() {
+		SetLogFormat(PIPE)
+	}()
+
+	SetLogFormat(JSON)
+
+	buff := bytes.NewBufferString("")
+	i := Scope("UnitTest").WithCustomWriter(buff)
+	i.Info("Test message as JSON %s", "test")
+
+	var values map[string]interface{}
+	json.Unmarshal(buff.Bytes(), &values)
+
+	if _, ok := values["customField"]; ok {
+		t.Errorf("Got %q want ''.", values["customField"])
+	}
+}
