@@ -653,7 +653,7 @@ func TestJsonFormat(t *testing.T) {
 	i.Info("Test message as JSON %s", "test")
 
 	var values map[string]interface{}
-	json.Unmarshal(buff.Bytes(), &values)
+	_ = json.Unmarshal(buff.Bytes(), &values)
 
 	if values["time"] == "" {
 		t.Errorf("Got empty want not empty.")
@@ -700,7 +700,7 @@ func TestLogWithoutCustomValue(t *testing.T) {
 	i.Info("Test message as JSON %s", "test")
 
 	var values map[string]interface{}
-	json.Unmarshal(buff.Bytes(), &values)
+	_ = json.Unmarshal(buff.Bytes(), &values)
 
 	if _, ok := values["customField"]; ok {
 		t.Errorf("Got %q want ''.", values["customField"])
